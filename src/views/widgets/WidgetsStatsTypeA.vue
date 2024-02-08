@@ -2,13 +2,13 @@
   <CRow :xs="{ gutter: 4 }">
     <CCol :sm="6" :xl="4" :xxl="3">
       <CWidgetStatsA color="primary">
-        <template #value
-          >26K
+        <template #value>
+          {{ computeStats('totalDeliveries', currentSelectionMap.totalDeliveries.time.value) }}
           <span class="fs-6 fw-normal">
-            (-12.4% <CIcon icon="cil-arrow-bottom" />)
+            (25% <CIcon icon="cil-arrow-top" />)
           </span>
         </template>
-        <template #title>Users</template>
+        <template #title>Total Deliveries</template>
         <template #action>
           <CDropdown placement="bottom-end">
             <CDropdownToggle
@@ -16,12 +16,12 @@
               class="p-0 text-white"
               :caret="false"
             >
+              {{ currentSelectionMap.totalDeliveries.time.label }}
               <CIcon icon="cil-options" class="text-white" />
             </CDropdownToggle>
             <CDropdownMenu>
-              <CDropdownItem href="#">Action</CDropdownItem>
-              <CDropdownItem href="#">Another action</CDropdownItem>
-              <CDropdownItem href="#">Something else here</CDropdownItem>
+              <CDropdownItem @click="updateSelection('totalDeliveries', 'week')">Last Week</CDropdownItem>
+              <CDropdownItem @click="updateSelection('totalDeliveries', 'month')">Last Month</CDropdownItem>
             </CDropdownMenu>
           </CDropdown>
         </template>
@@ -100,13 +100,13 @@
     </CCol>
     <CCol :sm="6" :xl="4" :xxl="3">
       <CWidgetStatsA color="info">
-        <template #value
-          >$6.200
+        <template #value>
+          {{ computeTime(computeStats('totalTimeInPod', currentSelectionMap.totalTimeInPod.time.value)) }}
           <span class="fs-6 fw-normal">
-            (40.9% <CIcon icon="cil-arrow-top" />)
+            (48% <CIcon icon="cil-arrow-top" />)
           </span>
         </template>
-        <template #title>Income</template>
+        <template #title>Total Time in Pod</template>
         <template #action>
           <CDropdown placement="bottom-end">
             <CDropdownToggle
@@ -114,12 +114,12 @@
               class="p-0 text-white"
               :caret="false"
             >
+            {{ currentSelectionMap.totalTimeInPod.time.label }}
               <CIcon icon="cil-options" class="text-white" />
             </CDropdownToggle>
             <CDropdownMenu>
-              <CDropdownItem href="#">Action</CDropdownItem>
-              <CDropdownItem href="#">Another action</CDropdownItem>
-              <CDropdownItem href="#">Something else here</CDropdownItem>
+              <CDropdownItem @click="updateSelection('totalTimeInPod', 'week')">Last Week</CDropdownItem>
+              <CDropdownItem @click="updateSelection('totalTimeInPod', 'month')">Last Month</CDropdownItem>
             </CDropdownMenu>
           </CDropdown>
         </template>
@@ -198,12 +198,12 @@
     <CCol :sm="6" :xl="4" :xxl="3">
       <CWidgetStatsA color="warning">
         <template #value
-          >2.49%
+          >{{ computeStats('totalUsers', currentSelectionMap.totalUsers.time.value) }}
           <span class="fs-6 fw-normal">
-            (84.7% <CIcon icon="cil-arrow-top" />)
+            (17% <CIcon icon="cil-arrow-top" />)
           </span>
         </template>
-        <template #title>Conversion Rate</template>
+        <template #title>Total Users</template>
         <template #action>
           <CDropdown placement="bottom-end">
             <CDropdownToggle
@@ -211,12 +211,12 @@
               class="p-0 text-white"
               :caret="false"
             >
+            {{ currentSelectionMap.totalUsers.time.label }}
               <CIcon icon="cil-options" class="text-white" />
             </CDropdownToggle>
             <CDropdownMenu>
-              <CDropdownItem href="#">Action</CDropdownItem>
-              <CDropdownItem href="#">Another action</CDropdownItem>
-              <CDropdownItem href="#">Something else here</CDropdownItem>
+              <CDropdownItem @click="updateSelection('totalUsers', 'week')">Last Week</CDropdownItem>
+              <CDropdownItem @click="updateSelection('totalUsers', 'month')">Last Month</CDropdownItem>
             </CDropdownMenu>
           </CDropdown>
         </template>
@@ -380,9 +380,10 @@
 </template>
 
 <script>
-import { onMounted, ref } from 'vue'
+import { onMounted, ref, reactive, computed } from 'vue'
 import { CChart } from '@coreui/vue-chartjs'
 import { getStyle } from '@coreui/utils'
+import { getPodOnlineStatus } from '../../utils/api'
 
 export default {
   name: 'WidgetsStatsA',
@@ -408,8 +409,51 @@ export default {
         }
       })
     })
+    // when there's an actual api, need to set loading states here and use async
+    const data = reactive(getPodOnlineStatus());
+    console.log('data', data);
+    const stats = computed(() => data.stats);
+    console.log('stats totalDeliveries', stats.value.totalDeliveries);
+    const currentSelectionMap = reactive({
+      totalDeliveries: {
+        time: {
+          label: 'Last week',
+          value: 'week'
+        }
+      },
+      totalTimeInPod: {
+        time: {
+          label: 'Last week',
+          value: 'week'
+        }
+      },
+      totalUsers: {
+        time: {
+          label: 'Last week',
+          value: 'week'
+        }
+      }
+    });
+    const computeStats = (type, time) => {
+      console.log('stats', stats);
+      return stats.value[`${type}`][`${time}`];
+    }
+    const updateSelection = (type, time) => {
+      let option = {
+        label: `Last ${time}`,
+        value: time
+      };
+      currentSelectionMap[`${type}`].time = option;
+      console.log('currentSelectionMap', currentSelectionMap);
+    }
+    const computeTime = (min) => {
+      if (min > 60) {
+        return `${Math.round(min/60)} hours ${min%60} min`;
+      }
+      return `${min} min`
+    }
 
-    return { getStyle, widgetChartRef1, widgetChartRef2 }
+    return { computeTime, currentSelectionMap, updateSelection, computeStats, getStyle, widgetChartRef1, widgetChartRef2 }
   },
 }
 </script>

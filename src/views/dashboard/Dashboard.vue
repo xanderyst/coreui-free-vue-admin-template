@@ -1,6 +1,6 @@
 <template>
   <div>
-    <PodOnlineStatusTable />
+    <PodOnlineStatusTable class="mb-4"/>
     <WidgetsStatsA class="mb-4" />
     <CRow>
       <CCol :md="12">
